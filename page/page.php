@@ -63,31 +63,31 @@ class page
         'commonOpen'  => '<li>',                //普通页的开启标签
         'commonClose' =>  '</li>',              //普通页的闭合标签
 
-        'currentOpen' => '<li>',                //当前页的开启标签
+        'currentOpen' => '<li class="currentPage">',                //当前页的开启标签
         'currentClose' => '</li>',              //当前页的闭合标签
 
         'isFirst'   => true,                     //是否显示首页链接
         'firstTrigger' => 3,                     //超过多少页触发显示首页链接
         'firstSign' => '首页',                    //首页链接的字符显示 << first 等等
-        'firstOpen' =>  '<li>',                  //首页包裹元素的开启标签
+        'firstOpen' =>  '<li class="firstPage">',                  //首页包裹元素的开启标签
         'firstClose'=>  '</li>',                 //首页包裹元素的闭合标签
 
         'isLast'    => 'true',                 //是否显示尾页
         'lastTrigger' => 3,                    //超过多少页触发显示尾页链接
         'lastSign'  => '最后一页',               //尾页字符显示
-        'lastOpen'  =>  '<li>',                //尾页的开启标签
+        'lastOpen'  =>  '<li class="lastPage">',                //尾页的开启标签
         'lastClose' => '</li>',                //尾页的闭合标签
 
         'isPre'     =>  'true',                 //是否显示上一页
         'preTrigger'=>  3,                      //超过多少页触发显示上一页链接
         'preSign'   =>  '上一页',                //上一页的标识符
-        'preOpen'   =>  '<li>',                 //上一页开启标签
+        'preOpen'   =>  '<li class="prePage">',                 //上一页开启标签
         'preClose'  =>  '</li>',                //上一页闭合标签
 
         'isNext'    =>  'true',                  //是否显示下一页
         'nextTrigger' => 3,                      //超过多少页触发显示下一页链接
         'nextSign'  =>  '下一页',                 //下一页的标识符
-        'nextOpen'  =>  '<li>',                 //下一页开启标签
+        'nextOpen'  =>  '<li class="nextPage">',                 //下一页开启标签
         'nextClose' =>  '</li>'                 //下一页闭合标签
 
     );
@@ -203,6 +203,8 @@ class page
      */
     public function getFilterLink()
     {
+        $this->_setFilterLink();
+        dump($this->filterLink);
         return $this->filterLink;
     }
 
@@ -270,7 +272,7 @@ class page
             $nextLink = ($current==$totalPage) ? '' : $this->_getLink($current+1);
             $commonLink = $this->_getCommomLink($totalPage,$current);
             $this->linkArr = array(
-                'first'     =>  $firstLink,
+                'firstLink'     =>  $firstLink,
                 'lastLink' =>  $lastLink,
                 'current'   =>  $current,
                 'preLink'   =>  $preLink,
@@ -278,6 +280,53 @@ class page
                 'commonLink'=>  $commonLink
             );
         }
+    }
+
+    /**设置经过配置信息过滤后的分页数组
+     *
+     */
+    private function _setFilterLink()
+    {
+        if(empty($this->linkArr))
+            $this->_setLinkArr();
+
+        $totalNum = $this->totalNum;
+        $perNum = $this->perNum;
+        $totalPage = ceil($totalNum / $perNum);
+        $current = $this->current;
+        $linkArr = $this->linkArr;
+        $config = $this->config;
+
+        if(! $config['isPre'] || $current==1)
+            $linkArr['preLink'] = '';
+
+        if(! $config['isNext'] || $current==$totalPage)
+            $linkArr['nextLink'] ='';
+
+        if($this->commonNum > $config['showPage'])
+        {
+            $temp = array();
+           for($i=1;$i<=$config['showPage'];$i++)
+           {
+               $prePage = $current - $i;
+               $nextPage = $current + $i;
+               if(isset($linkArr['commonLink'][$prePage]))
+                   $temp[$prePage] = $linkArr['commonLink'][$prePage];
+               if(isset($linkArr['commonLink'][$nextPage]))
+                   $temp[$nextPage] = $linkArr['commonLink'][$nextPage];
+               $temp[$current] = $linkArr['commonLink'][$current];
+           }
+           ksort($temp);
+           $linkArr['commonLink'] = $temp;
+        }
+
+        if(! $config['isFirst'] || isset($linkArr['commonLink'][1]))
+            $linkArr['firstLink'] = '';
+
+        if(! $config['isLast'] || isset($linkArr['commonLink'][$totalPage]))
+            $linkArr['lastLink'] = '';
+
+        $this->filterLink = $linkArr;
     }
 
     /**获得普通页的链接数组
