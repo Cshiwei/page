@@ -204,7 +204,7 @@ class page
     public function getFilterLink()
     {
         $this->_setFilterLink();
-        dump($this->filterLink);
+       // dump($this->filterLink);
         return $this->filterLink;
     }
 
