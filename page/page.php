@@ -102,6 +102,11 @@ class page
      */
     private $configPath='.../config/page.php';
 
+    /**保存过滤后的html代码
+     * @var
+     */
+    private $filterHtml;
+
 
     /**构造函数可以再次添加配置数组
      * page constructor.
@@ -181,12 +186,24 @@ class page
     }
 
     /**获取分页链接的html代码
-     *
+     * @param bool| $isStr 以字符串形式返回还是以数组形式返回
+     * @return
      */
-    public function getLink()
+    public function getLinkHtml($isStr=true)
     {
-        return $this->link;
+        $this->_setLinkHtml($isStr);
+        return $this->linkHtml;
     }
+
+    /**获取过滤后的分页链接html代码
+     * @param bool $isStr
+     */
+    public function getFilterHtml($isStr=true)
+    {
+        $this->_setFilterHtml($isStr);
+        return $this->filterHtml;
+    }
+
 
     /**获取分页相关的数组信息
      *未经被配置信息过滤
@@ -194,7 +211,6 @@ class page
     public function getLinkArr()
     {
         $this->_setLinkArr();
-        dump($this->linkArr);
         return $this->linkArr;
     }
 
@@ -204,7 +220,7 @@ class page
     public function getFilterLink()
     {
         $this->_setFilterLink();
-       // dump($this->filterLink);
+        dump($this->filterLink);
         return $this->filterLink;
     }
 
@@ -242,13 +258,88 @@ class page
         $this->config = array_merge($this->defaultConfig,$default,$appoint);
     }
 
-    /**设置分页链接html代码
-     *
+    /**设置分页链接html代码(未经过配置信息过滤)
+     * @param bool 是否返回字符串，如果false则返回数组
      */
-    private function _setLinkHtml()
+    private function _setLinkHtml($isStr=true)
     {
+        if(empty($this->linkArr))
+            $this->_setLinkArr();
 
+        $this->linkHtml = $this->_getHtml($this->linkArr,false,$isStr);
     }
+
+    /**获取经过过滤的html
+     * @param bool $isStr  是否已字符串形式返回
+     */
+    private function _setFilterHtml($isStr=true)
+    {
+        if(empty($this->filterLink))
+            $this->_setFilterLink();
+
+        $this->filterHtml = $this->_getHtml($this->filterLink,true,$isStr);
+    }
+
+    /**拼接html代码
+     * @param array $linkArr 分页信息数组，未过滤或者过滤后的都可以
+     * @param bool $isStr 是否返回字符串
+     * @param bool $filter 是否返回过滤后的信息
+     * @return array|string
+     */
+    private function _getHtml(array $linkArr,$filter=true,$isStr=true)
+    {
+        $current = $this->current;
+        $config = $this->config;
+
+        $firstHtml = (! empty($linkArr['firstLink'])) ? $config['firstOpen']."<a href='{$linkArr['firstLink']}'>{$config['firstSign']}</a>".$config['firstClose'] : '';
+        $lastHtml = (! empty($linkArr['lastLink'])) ? $config['lastOpen']."<a href='{$linkArr['lastLink']}'>{$config['lastSign']}</a>".$config['lastClose'] : '';
+        $preHtml = (! empty($linkArr['preLink'])) ? $config['preOpen']."<a href='{$linkArr['preLink']}'>{$config['preSign']}</a>".$config['preClose'] : '';
+        $nextHtml = (! empty($linkArr['nextLink'])) ? $config['nextOpen']."<a href='{$linkArr['nextLink']}'>{$config['nextSign']}</a>".$config['nextClose'] : '';
+        $commonHtml = $this->_getCommonHtml($config,$filter);
+        if($isStr)
+        {
+            $commonHtml = implode('',$commonHtml);
+            $linkHtml = $firstHtml.$preHtml.$commonHtml.$nextHtml.$lastHtml;
+        }
+        else
+        {
+            $linkHtml = array(
+                'firstHtml' => $firstHtml,
+                'preHtml'   => $preHtml,
+                'current'   => $current,
+                'nextHtml'  => $nextHtml,
+                'lastHtml'  => $lastHtml,
+                'commonHtml'=> $commonHtml,
+            );
+        }
+
+        return $linkHtml;
+    }
+
+    /**设置普通链接的html
+     * @param $config     配置信息
+     * @param bool $filter 是否使用配置信息过滤后的代码
+     */
+    private function _getCommonHtml($config,$filter=true)
+    {
+        if(! $filter)
+            $commonArr = $this->linkArr['commonLink'];
+        else
+            $commonArr = $this->filterLink['commonLink'];
+
+        $current = $this->current;
+        $currentHtml = $config['currentOpen']."<a href='{$commonArr[$current]}'>{$current}</a>".$config['currentClose'];
+        unset($commonArr[$current]);
+
+        foreach ($commonArr as $key=>$val)
+        {
+            $commonArr[$key]= $config['commonOpen']."<a href='{$val}'>{$key}</a>".$config['commonClose'];
+        }
+        $commonArr[$current] = $currentHtml;
+        ksort($commonArr);
+        return $commonArr;
+    }
+
 
     /**设置分页相关数组数据
      *
@@ -268,12 +359,12 @@ class page
             $firstLink = $this->_getLink(1);
             $lastLink = $this->_getLink($totalPage);
             $current = $this->_getCurrent();
-            $preLink = ($current==1) ? '' : $this->_getLink($current - 1);
-            $nextLink = ($current==$totalPage) ? '' : $this->_getLink($current+1);
+            $preLink = ($current==1) ? $this->_getLink(1) : $this->_getLink($current - 1);
+            $nextLink = ($current==$totalPage) ? $this->_getLink($current) : $this->_getLink($current+1);
             $commonLink = $this->_getCommomLink($totalPage,$current);
             $this->linkArr = array(
-                'firstLink'     =>  $firstLink,
-                'lastLink' =>  $lastLink,
+                'firstLink' =>  $firstLink,
+                'lastLink'  =>  $lastLink,
                 'current'   =>  $current,
                 'preLink'   =>  $preLink,
                 'nextLink'  =>  $nextLink,
