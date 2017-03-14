@@ -1,6 +1,6 @@
 # page
 一个简单易用的分页类，支持自定义标签。
-```
+```php
 include LIB_PATH.'page/page.php';
 $config = array(
     'showPage'    => '2',                   //当前页左右两边显示页码数量
