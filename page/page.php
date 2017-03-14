@@ -14,6 +14,16 @@ class page
      */
     private $baseUrl;
 
+    /**是否以pathInfo模式拼接分页链接
+     * @var
+     */
+    private $isPathInfo;
+
+    /**如果是以pathInfo模式拼接，请指定段位
+     * @var
+     */
+    private $segment;
+
     /**总条数
      * @var
      */
@@ -172,17 +182,31 @@ class page
      * @param $url
      * @return $this
      */
-    public function setUrl($url='')
+    public function setUrl($url)
     {
         if($url != '')
-        {
             $this->baseUrl = $url;
-        }
-        else
-        {
-            //自动获取url
-        }
+
         return $this;
+    }
+
+    /**TODO 自动分析url未完成
+     * 是否以pathinfo模式拼接分页链接
+     * @param $isPathInfo   true or false
+     * @param string $segment 如果以pathInfo模式拼接，
+     *                      如果指定段位，则直接获取该段位上的数字，否则以 pageNum/5方式拼接
+     */
+    private function setPathInfo($isPathInfo,$segment='')
+    {
+
+    }
+
+    /**
+     *
+     */
+    private function setSegment()
+    {
+
     }
 
     /**获取分页链接的html代码
